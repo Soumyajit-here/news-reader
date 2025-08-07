@@ -1,0 +1,1119 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Personalized News Reader</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            color: #333;
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .header {
+            text-align: center;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 30px;
+            margin-bottom: 30px;
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .header h1 {
+            font-size: 2.5em;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 10px;
+        }
+
+        .header p {
+            color: #666;
+            font-size: 1.1em;
+        }
+
+        .preferences {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 30px;
+            margin-bottom: 30px;
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .preferences h2 {
+            margin-bottom: 20px;
+            color: #333;
+            font-size: 1.5em;
+        }
+
+        .interest-tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-bottom: 30px;
+        }
+
+        .tag {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            color: white;
+            padding: 12px 20px;
+            border-radius: 25px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-weight: 500;
+            border: 2px solid transparent;
+            user-select: none;
+        }
+
+        .tag:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(240, 147, 251, 0.4);
+        }
+
+        .tag.selected {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-color: #fff;
+            transform: scale(1.05);
+        }
+
+        .controls {
+            display: flex;
+            gap: 15px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        .btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 25px;
+            cursor: pointer;
+            font-size: 1em;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            border: 2px solid transparent;
+        }
+
+        .btn:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+
+        .sort-select {
+            padding: 12px 20px;
+            border-radius: 25px;
+            border: 2px solid #667eea;
+            background: white;
+            color: #333;
+            font-size: 1em;
+            cursor: pointer;
+            outline: none;
+        }
+
+        .analytics-panel {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 30px;
+            margin-bottom: 30px;
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .analytics-panel h3 {
+            margin-bottom: 20px;
+            color: #333;
+            font-size: 1.3em;
+        }
+
+        .analytics-content {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 20px;
+        }
+
+        .analytics-item {
+            text-align: center;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            padding: 20px;
+            border-radius: 15px;
+        }
+
+        .analytics-number {
+            font-size: 2em;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+
+        .analytics-label {
+            font-size: 0.9em;
+            opacity: 0.9;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 50px;
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            margin-bottom: 30px;
+        }
+
+        .spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #667eea;
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 20px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .news-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(400px, 1fr));
+            gap: 25px;
+            margin-bottom: 30px;
+        }
+
+        .news-card {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 25px;
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .news-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
+        }
+
+        .priority-badge {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            padding: 5px 12px;
+            border-radius: 15px;
+            font-size: 0.8em;
+            font-weight: bold;
+            text-transform: uppercase;
+        }
+
+        .priority-high {
+            background: linear-gradient(135deg, #ff4757, #ff3742);
+            color: white;
+        }
+
+        .priority-medium {
+            background: linear-gradient(135deg, #ffa502, #ff6348);
+            color: white;
+        }
+
+        .priority-low {
+            background: linear-gradient(135deg, #7bed9f, #70a1ff);
+            color: white;
+        }
+
+        .news-title {
+            font-size: 1.3em;
+            margin-bottom: 15px;
+            color: #333;
+            line-height: 1.4;
+            padding-right: 80px;
+        }
+
+        .news-source {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+            color: #666;
+            font-size: 0.9em;
+        }
+
+        .news-summary {
+            color: #555;
+            margin-bottom: 20px;
+            line-height: 1.6;
+        }
+
+        .news-keywords {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-bottom: 20px;
+        }
+
+        .keyword-tag {
+            background: linear-gradient(135deg, #a8edea, #fed6e3);
+            color: #333;
+            padding: 4px 12px;
+            border-radius: 15px;
+            font-size: 0.8em;
+            font-weight: 500;
+        }
+
+        .relevance-score {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            padding: 8px 15px;
+            border-radius: 15px;
+            font-size: 0.9em;
+            font-weight: bold;
+            margin-bottom: 20px;
+            display: inline-block;
+        }
+
+        .news-actions {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .read-more {
+            color: #667eea;
+            text-decoration: none;
+            font-weight: bold;
+            transition: all 0.3s ease;
+        }
+
+        .read-more:hover {
+            color: #764ba2;
+            text-decoration: underline;
+        }
+
+        .bookmark-btn {
+            background: none;
+            border: none;
+            font-size: 1.5em;
+            cursor: pointer;
+            color: #ccc;
+            transition: all 0.3s ease;
+        }
+
+        .bookmark-btn:hover,
+        .bookmark-btn.bookmarked {
+            color: #ffd700;
+        }
+
+        .no-news {
+            text-align: center;
+            padding: 50px;
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            color: #666;
+            font-size: 1.1em;
+        }
+
+        .notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 15px 25px;
+            border-radius: 10px;
+            color: white;
+            font-weight: bold;
+            z-index: 1000;
+            animation: slideIn 0.3s ease;
+            max-width: 400px;
+        }
+
+        .notification-success { background: #4caf50; }
+        .notification-error { background: #f44336; }
+        .notification-warning { background: #ff9800; }
+        .notification-info { background: #2196f3; }
+
+        @keyframes slideIn {
+            from { transform: translateX(100%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+
+        @keyframes slideOut {
+            from { transform: translateX(0); opacity: 1; }
+            to { transform: translateX(100%); opacity: 0; }
+        }
+
+        @media (max-width: 768px) {
+            .news-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .container {
+                padding: 15px;
+            }
+            
+            .header h1 {
+                font-size: 2em;
+            }
+            
+            .controls {
+                flex-direction: column;
+                align-items: stretch;
+            }
+            
+            .analytics-content {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>📰 Personalized News Reader</h1>
+            <p>AI-powered news curation based on your interests</p>
+        </div>
+        
+        <div class="preferences">
+            <h2>Your Interests</h2>
+            <div class="interest-tags" id="interestTags">
+                <div class="tag" data-interest="technology">Technology</div>
+                <div class="tag" data-interest="business">Business</div>
+                <div class="tag" data-interest="science">Science</div>
+                <div class="tag" data-interest="health">Health</div>
+                <div class="tag" data-interest="sports">Sports</div>
+                <div class="tag" data-interest="entertainment">Entertainment</div>
+                <div class="tag" data-interest="politics">Politics</div>
+                <div class="tag" data-interest="world">World News</div>
+            </div>
+            
+            <div class="controls">
+                <button class="btn" id="fetchNewsBtn" disabled>🔄 Select interests first</button>
+                <button class="btn" id="clearNewsBtn">🗑️ Clear</button>
+                <select id="sortSelect" class="sort-select">
+                    <option value="relevance">Sort by Relevance</option>
+                    <option value="date">Sort by Date</option>
+                    <option value="priority">Sort by Priority</option>
+                </select>
+            </div>
+        </div>
+        
+        <div class="analytics-panel" id="analyticsPanel" style="display: none;">
+            <h3>📊 Analysis Summary</h3>
+            <div class="analytics-content" id="analyticsContent"></div>
+        </div>
+        
+        <div id="loadingDiv" class="loading" style="display: none;">
+            <div class="spinner"></div>
+            <p>Fetching and analyzing news articles...</p>
+        </div>
+        
+        <div id="newsContainer" class="news-grid"></div>
+        
+        <div id="noNewsMessage" class="no-news" style="display: none;">
+            <p>No news articles match your selected interests. Try selecting different categories!</p>
+        </div>
+    </div>
+
+    <script>
+        // Personalized News Reader Application
+        class PersonalizedNewsReader {
+            constructor() {
+                this.selectedInterests = new Set();
+                this.newsData = [];
+                this.bookmarkedArticles = new Set();
+                this.currentSortMethod = 'relevance';
+                
+                this.initializeEventListeners();
+                this.loadUserPreferences();
+                
+                // Show welcome message
+                this.showNotification('Welcome to your Personalized News Reader! Select some interests to get started.', 'info');
+            }
+
+            initializeEventListeners() {
+                // Interest tag selection
+                const interestTags = document.getElementById('interestTags');
+                if (interestTags) {
+                    interestTags.addEventListener('click', (e) => {
+                        if (e.target.classList.contains('tag')) {
+                            this.toggleInterest(e.target);
+                        }
+                    });
+                }
+
+                // Main action buttons
+                const fetchNewsBtn = document.getElementById('fetchNewsBtn');
+                if (fetchNewsBtn) {
+                    fetchNewsBtn.addEventListener('click', () => {
+                        this.fetchNews();
+                    });
+                }
+
+                const clearNewsBtn = document.getElementById('clearNewsBtn');
+                if (clearNewsBtn) {
+                    clearNewsBtn.addEventListener('click', () => {
+                        this.clearNews();
+                    });
+                }
+
+                // Sort functionality
+                const sortSelect = document.getElementById('sortSelect');
+                if (sortSelect) {
+                    sortSelect.addEventListener('change', (e) => {
+                        this.currentSortMethod = e.target.value;
+                        this.sortAndDisplayNews();
+                        this.showNotification(`Articles sorted by ${e.target.value}`, 'info');
+                    });
+                }
+            }
+
+            toggleInterest(tagElement) {
+                const interest = tagElement.dataset.interest;
+                
+                if (tagElement.classList.contains('selected')) {
+                    tagElement.classList.remove('selected');
+                    this.selectedInterests.delete(interest);
+                    this.showNotification(`Removed ${interest} from interests`, 'info');
+                } else {
+                    tagElement.classList.add('selected');
+                    this.selectedInterests.add(interest);
+                    this.showNotification(`Added ${interest} to interests`, 'success');
+                }
+
+                this.saveUserPreferences();
+                this.updateFetchButtonState();
+            }
+
+            updateFetchButtonState() {
+                const fetchBtn = document.getElementById('fetchNewsBtn');
+                if (!fetchBtn) return;
+                
+                fetchBtn.disabled = this.selectedInterests.size === 0;
+                
+                if (this.selectedInterests.size === 0) {
+                    fetchBtn.textContent = '🔄 Select interests first';
+                } else {
+                    fetchBtn.textContent = `🔄 Fetch News (${this.selectedInterests.size} interests)`;
+                }
+            }
+
+            async fetchNews() {
+                if (this.selectedInterests.size === 0) {
+                    this.showNotification('Please select at least one interest category!', 'warning');
+                    return;
+                }
+
+                this.showLoading(true);
+                
+                try {
+                    // Simulate API delay
+                    await new Promise(resolve => setTimeout(resolve, 2000));
+                    
+                    // Generate mock news data based on selected interests
+                    const rawArticles = this.generateMockNews();
+                    
+                    if (rawArticles.length === 0) {
+                        this.showNoNews(true);
+                        this.showAnalytics(false);
+                        return;
+                    }
+
+                    // Process articles
+                    this.newsData = this.processArticles(rawArticles);
+                    
+                    // Sort and display
+                    this.sortAndDisplayNews();
+                    
+                    // Show analytics
+                    this.displayAnalytics();
+                    
+                    // Update UI
+                    this.showNoNews(false);
+                    this.showAnalytics(true);
+                    
+                    this.showNotification(`Successfully loaded ${this.newsData.length} personalized articles!`, 'success');
+                    
+                } catch (error) {
+                    console.error('Error fetching news:', error);
+                    this.showNotification('Error fetching news. Please try again.', 'error');
+                } finally {
+                    this.showLoading(false);
+                }
+            }
+
+            generateMockNews() {
+                const mockNewsTemplates = {
+                    technology: [
+                        {
+                            title: "Revolutionary AI Model Achieves Human-Level Performance in Complex Tasks",
+                            content: "A groundbreaking artificial intelligence system has demonstrated unprecedented capabilities in solving complex mathematical problems and creative tasks. The model shows remarkable improvements in reasoning abilities.",
+                            source: "Tech Innovation Daily"
+                        },
+                        {
+                            title: "5G Network Expansion Accelerates Worldwide",
+                            content: "Telecommunications companies are rapidly expanding 5G infrastructure across major cities, promising faster internet speeds and improved connectivity for millions of users.",
+                            source: "Wireless Technology News"
+                        },
+                        {
+                            title: "Cybersecurity Breakthrough Prevents Major Data Breach",
+                            content: "New AI-powered security systems successfully prevented a coordinated cyber attack on major financial institutions, showcasing the effectiveness of machine learning in cybersecurity.",
+                            source: "CyberSec Today"
+                        }
+                    ],
+                    business: [
+                        {
+                            title: "Global Markets Surge Following Positive Economic Indicators",
+                            content: "Stock markets worldwide experienced significant gains following better-than-expected employment figures and consumer confidence data. Major indices reached new highs as investors showed renewed optimism.",
+                            source: "Financial Times"
+                        },
+                        {
+                            title: "Renewable Energy Investments Reach Record High",
+                            content: "Corporate investments in renewable energy projects have reached unprecedented levels as companies commit to sustainability goals and carbon neutrality targets.",
+                            source: "Green Business Weekly"
+                        },
+                        {
+                            title: "E-commerce Growth Continues Despite Economic Uncertainty",
+                            content: "Online retail sales show resilient growth patterns, with consumers increasingly preferring digital shopping experiences over traditional retail methods.",
+                            source: "Commerce Report"
+                        }
+                    ],
+                    science: [
+                        {
+                            title: "Scientists Discover Evidence of Ancient Microbial Life on Mars",
+                            content: "Researchers analyzing samples from Mars have found compelling evidence of ancient microbial life on the Red Planet. This groundbreaking finding could reshape our understanding of life in the universe.",
+                            source: "Space Science Journal"
+                        },
+                        {
+                            title: "Breakthrough in Gene Therapy Offers Hope for Rare Diseases",
+                            content: "Researchers have developed a new gene editing technique that shows promise for treating previously incurable genetic disorders, offering hope to millions of patients worldwide.",
+                            source: "Medical Research Today"
+                        },
+                        {
+                            title: "Ocean Conservation Efforts Show Positive Results",
+                            content: "Marine biologists report encouraging signs of ecosystem recovery in protected ocean areas following intensive conservation efforts and reduced pollution.",
+                            source: "Environmental Science"
+                        }
+                    ],
+                    health: [
+                        {
+                            title: "New Cancer Treatment Shows 95% Success Rate in Clinical Trials",
+                            content: "A revolutionary cancer treatment combining immunotherapy with targeted drug delivery has shown remarkable results in phase III clinical trials with unprecedented success rates.",
+                            source: "Medical Journal"
+                        },
+                        {
+                            title: "Mental Health Awareness Programs Show Significant Impact",
+                            content: "Community-based mental health initiatives are demonstrating measurable improvements in public wellbeing and reduced stigma around mental health issues.",
+                            source: "Health & Wellness"
+                        },
+                        {
+                            title: "Precision Medicine Advances with AI-Powered Diagnostics",
+                            content: "Medical professionals are increasingly using artificial intelligence to provide more accurate diagnoses and personalized treatment plans for patients.",
+                            source: "Digital Health News"
+                        }
+                    ],
+                    sports: [
+                        {
+                            title: "Championship Finals Break All-Time Viewership Records",
+                            content: "The highly anticipated championship game attracted over 150 million viewers worldwide, setting new records for sports broadcasting and social media engagement.",
+                            source: "Sports Broadcasting Network"
+                        },
+                        {
+                            title: "Olympic Training Methods Revolutionized by Technology",
+                            content: "Athletes are using cutting-edge technology including VR training, biomechanical analysis, and AI coaching to improve performance and prevent injuries.",
+                            source: "Athletic Performance"
+                        },
+                        {
+                            title: "Youth Sports Participation Reaches New Heights",
+                            content: "Community sports programs report record enrollment numbers as parents and children embrace the physical and mental health benefits of athletic participation.",
+                            source: "Community Sports"
+                        }
+                    ],
+                    entertainment: [
+                        {
+                            title: "Hollywood Announces Revolutionary Virtual Reality Film Experience",
+                            content: "Major film studios have announced plans for the first fully immersive virtual reality movie experience, allowing audiences to interact with characters and influence storylines.",
+                            source: "Entertainment Weekly"
+                        },
+                        {
+                            title: "Streaming Services Invest Billions in Original Content",
+                            content: "Major streaming platforms are dramatically increasing their investment in original programming, creating unprecedented opportunities for content creators worldwide.",
+                            source: "Media Industry Report"
+                        },
+                        {
+                            title: "Music Industry Embraces AI-Generated Compositions",
+                            content: "Artificial intelligence is becoming an important tool for musicians and composers, helping create new musical arrangements and democratizing music production.",
+                            source: "Music Technology"
+                        }
+                    ],
+                    politics: [
+                        {
+                            title: "Government Announces New Digital Privacy Protection Laws",
+                            content: "New legislation has been introduced to strengthen digital privacy protections for citizens, including stricter data collection rules and enhanced user control over personal information.",
+                            source: "Policy Today"
+                        },
+                        {
+                            title: "Bipartisan Infrastructure Bill Receives Widespread Support",
+                            content: "A comprehensive infrastructure improvement plan has gained support from both major political parties, promising significant investments in transportation and technology.",
+                            source: "Political Weekly"
+                        },
+                        {
+                            title: "Election Security Measures Enhanced Nationwide",
+                            content: "Federal and state officials have implemented advanced security measures to protect the integrity of elections, including upgraded voting systems and cybersecurity protocols.",
+                            source: "Government News"
+                        }
+                    ],
+                    world: [
+                        {
+                            title: "Climate Summit Reaches Historic Agreement on Carbon Reduction",
+                            content: "World leaders at the global climate summit have reached a historic agreement to reduce carbon emissions by 60% within the next decade, with binding commitments from major economies.",
+                            source: "International News Network"
+                        },
+                        {
+                            title: "Global Trade Agreement Strengthens Economic Cooperation",
+                            content: "A new multilateral trade agreement promises to reduce barriers and increase economic cooperation between major economies, boosting global commerce.",
+                            source: "World Economic Forum"
+                        },
+                        {
+                            title: "International Space Station Mission Achieves Scientific Breakthrough",
+                            content: "Astronauts aboard the International Space Station have completed groundbreaking experiments that could lead to new materials and medical treatments on Earth.",
+                            source: "Global Science"
+                        }
+                    ]
+                };
+
+                const articles = [];
+                const interestArray = Array.from(this.selectedInterests);
+                
+                interestArray.forEach(interest => {
+                    if (mockNewsTemplates[interest]) {
+                        mockNewsTemplates[interest].forEach((template, index) => {
+                            articles.push({
+                                ...template,
+                                category: interest,
+                                publishedAt: new Date(Date.now() - (index + 1) * 2 * 60 * 60 * 1000).toISOString(),
+                                url: `https://example.com/${interest}-${index}`,
+                                urlToImage: `https://via.placeholder.com/400x200/764ba2/white?text=${interest.charAt(0).toUpperCase() + interest.slice(1)}`
+                            });
+                        });
+                    }
+                });
+
+                return articles;
+            }
+
+            processArticles(rawArticles) {
+                return rawArticles.map(article => {
+                    // Calculate relevance score (simple version)
+                    let relevanceScore = 50; // Base score
+                    const text = (article.title + ' ' + article.content).toLowerCase();
+                    
+                    // Boost for selected interests
+                    Array.from(this.selectedInterests).forEach(interest => {
+                        if (text.includes(interest.toLowerCase()) || article.category === interest) {
+                            relevanceScore += 20;
+                        }
+                    });
+                    
+                    // Add recency bonus
+                    const hoursOld = (new Date() - new Date(article.publishedAt)) / (1000 * 60 * 60);
+                    if (hoursOld < 24) relevanceScore += 10;
+                    
+                    relevanceScore = Math.min(100, relevanceScore);
+
+                    // Generate summary
+                    const summary = article.content.length > 150 ? 
+                        article.content.substring(0, 150) + '...' : article.content;
+
+                    // Determine priority
+                    let priority = 'low';
+                    if (relevanceScore > 80) priority = 'high';
+                    else if (relevanceScore > 60) priority = 'medium';
+
+                    // Extract keywords (simple)
+                    const words = article.content.toLowerCase().split(/\W+/)
+                        .filter(word => word.length > 4)
+                        .slice(0, 5);
+
+                    // Calculate reading time
+                    const wordCount = article.content.split(/\s+/).length;
+                    const readingTime = Math.max(1, Math.ceil(wordCount / 200));
+
+                    return {
+                        ...article,
+                        relevanceScore,
+                        summary,
+                        priority,
+                        keywords: words,
+                        readingTime,
+                        isBookmarked: this.bookmarkedArticles.has(article.url)
+                    };
+                });
+            }
+
+            sortAndDisplayNews() {
+                let sortedArticles = [...this.newsData];
+                
+                switch (this.currentSortMethod) {
+                    case 'relevance':
+                        sortedArticles.sort((a, b) => b.relevanceScore - a.relevanceScore);
+                        break;
+                    case 'date':
+                        sortedArticles.sort((a, b) => new Date(b.publishedAt) - new Date(a.publishedAt));
+                        break;
+                    case 'priority':
+                        const priorityOrder = { high: 3, medium: 2, low: 1 };
+                        sortedArticles.sort((a, b) => 
+                            (priorityOrder[b.priority] || 0) - (priorityOrder[a.priority] || 0) ||
+                            b.relevanceScore - a.relevanceScore
+                        );
+                        break;
+                }
+                
+                this.displayNews(sortedArticles);
+            }
+
+            displayNews(articles) {
+                const container = document.getElementById('newsContainer');
+                if (!container) return;
+                
+                container.innerHTML = '';
+
+                articles.forEach((article, index) => {
+                    const articleElement = this.createArticleElement(article, index);
+                    container.appendChild(articleElement);
+                });
+
+                // Add entrance animation
+                const cards = container.querySelectorAll('.news-card');
+                cards.forEach((card, index) => {
+                    card.style.opacity = '0';
+                    card.style.transform = 'translateY(20px)';
+                    setTimeout(() => {
+                        card.style.transition = 'all 0.5s ease';
+                        card.style.opacity = '1';
+                        card.style.transform = 'translateY(0)';
+                    }, index * 100);
+                });
+            }
+
+            createArticleElement(article, index) {
+                const articleDiv = document.createElement('div');
+                articleDiv.className = 'news-card';
+                articleDiv.setAttribute('data-category', article.category || 'general');
+                
+                const timeAgo = this.getTimeAgo(article.publishedAt);
+                const keywordsHTML = (article.keywords || []).map(keyword => 
+                    `<span class="keyword-tag">${keyword}</span>`
+                ).join('');
+
+                articleDiv.innerHTML = `
+                    <div class="priority-badge priority-${article.priority || 'medium'}">${(article.priority || 'medium').toUpperCase()}</div>
+                    
+                    <h3 class="news-title">${article.title || 'Untitled'}</h3>
+                    
+                    <div class="news-source">
+                        <span>${article.source || 'Unknown Source'}</span>
+                        <span class="source-time">${timeAgo} • ${article.readingTime || 0} min read</span>
+                    </div>
+                    
+                    <div class="news-summary">${article.summary || 'No summary available'}</div>
+                    
+                    <div class="news-keywords">${keywordsHTML}</div>
+                    
+                    <div class="relevance-score">
+                        Relevance: ${article.relevanceScore || 0}%
+                    </div>
+                    
+                    <div class="news-actions">
+                        <a href="${article.url || '#'}" target="_blank" class="read-more" rel="noopener noreferrer">
+                            Read Full Article →
+                        </a>
+                        <button class="bookmark-btn ${article.isBookmarked ? 'bookmarked' : ''}" 
+                                data-url="${article.url || ''}" title="Bookmark">
+                            ${article.isBookmarked ? '★' : '☆'}
+                        </button>
+                    </div>
+                `;
+
+                // Add bookmark functionality
+                const bookmarkBtn = articleDiv.querySelector('.bookmark-btn');
+                if (bookmarkBtn) {
+                    bookmarkBtn.addEventListener('click', (e) => {
+                        this.toggleBookmark(article.url || '', e.target);
+                    });
+                }
+
+                return articleDiv;
+            }
+
+            displayAnalytics() {
+                const analytics = this.generateAnalytics();
+                const analyticsContent = document.getElementById('analyticsContent');
+                
+                if (!analyticsContent) return;
+                
+                analyticsContent.innerHTML = `
+                    <div class="analytics-item">
+                        <div class="analytics-number">${analytics.totalArticles || 0}</div>
+                        <div class="analytics-label">Articles Found</div>
+                    </div>
+                    <div class="analytics-item">
+                        <div class="analytics-number">${analytics.avgRelevanceScore || 0}%</div>
+                        <div class="analytics-label">Avg Relevance</div>
+                    </div>
+                    <div class="analytics-item">
+                        <div class="analytics-number">${analytics.topCategory || 'N/A'}</div>
+                        <div class="analytics-label">Top Category</div>
+                    </div>
+                    <div class="analytics-item">
+                        <div class="analytics-number">${analytics.avgReadingTime || 0}</div>
+                        <div class="analytics-label">Avg Reading Time (min)</div>
+                    </div>
+                    <div class="analytics-item">
+                        <div class="analytics-number">${(analytics.priorityDistribution && analytics.priorityDistribution.high) || 0}</div>
+                        <div class="analytics-label">High Priority</div>
+                    </div>
+                    <div class="analytics-item">
+                        <div class="analytics-number">${(analytics.sentimentDistribution && analytics.sentimentDistribution.positive) || 0}</div>
+                        <div class="analytics-label">Positive News</div>
+                    </div>
+                `;
+            }
+
+            generateAnalytics() {
+                if (!this.newsData.length) {
+                    return {
+                        totalArticles: 0,
+                        avgRelevanceScore: 0,
+                        topCategory: 'N/A',
+                        avgReadingTime: 0,
+                        priorityDistribution: { high: 0, medium: 0, low: 0 },
+                        sentimentDistribution: { positive: 0, neutral: 0, negative: 0 }
+                    };
+                }
+                
+                const totalArticles = this.newsData.length;
+                const avgRelevanceScore = Math.round(
+                    this.newsData.reduce((sum, article) => sum + (article.relevanceScore || 0), 0) / totalArticles
+                );
+                
+                // Find most common category
+                const categories = {};
+                this.newsData.forEach(article => {
+                    const cat = article.category || 'general';
+                    categories[cat] = (categories[cat] || 0) + 1;
+                });
+                const topCategory = Object.keys(categories).reduce((a, b) => 
+                    categories[a] > categories[b] ? a : b, 'general'
+                );
+                
+                const avgReadingTime = Math.round(
+                    this.newsData.reduce((sum, article) => sum + (article.readingTime || 0), 0) / totalArticles
+                );
+                
+                // Priority distribution
+                const priorityDistribution = { high: 0, medium: 0, low: 0 };
+                this.newsData.forEach(article => {
+                    const priority = article.priority || 'medium';
+                    priorityDistribution[priority]++;
+                });
+                
+                // Simple sentiment analysis
+                const sentimentDistribution = { positive: 0, neutral: 0, negative: 0 };
+                this.newsData.forEach(article => {
+                    const text = (article.title + ' ' + article.content).toLowerCase();
+                    const positiveWords = ['breakthrough', 'success', 'achievement', 'positive', 'growth', 'improvement'];
+                    const negativeWords = ['crisis', 'problem', 'issue', 'decline', 'negative'];
+                    
+                    let sentiment = 'neutral';
+                    let positiveCount = positiveWords.filter(word => text.includes(word)).length;
+                    let negativeCount = negativeWords.filter(word => text.includes(word)).length;
+                    
+                    if (positiveCount > negativeCount) sentiment = 'positive';
+                    else if (negativeCount > positiveCount) sentiment = 'negative';
+                    
+                    sentimentDistribution[sentiment]++;
+                });
+                
+                return {
+                    totalArticles,
+                    avgRelevanceScore,
+                    topCategory,
+                    avgReadingTime,
+                    priorityDistribution,
+                    sentimentDistribution
+                };
+            }
+
+            toggleBookmark(articleUrl, buttonElement) {
+                if (this.bookmarkedArticles.has(articleUrl)) {
+                    this.bookmarkedArticles.delete(articleUrl);
+                    buttonElement.classList.remove('bookmarked');
+                    buttonElement.textContent = '☆';
+                    buttonElement.title = 'Bookmark';
+                    this.showNotification('Bookmark removed', 'info');
+                } else {
+                    this.bookmarkedArticles.add(articleUrl);
+                    buttonElement.classList.add('bookmarked');
+                    buttonElement.textContent = '★';
+                    buttonElement.title = 'Remove bookmark';
+                    this.showNotification('Article bookmarked!', 'success');
+                }
+                
+                this.saveUserPreferences();
+            }
+
+            getTimeAgo(publishedAt) {
+                if (!publishedAt) return 'Unknown time';
+                
+                const now = new Date();
+                const published = new Date(publishedAt);
+                const diffMs = now - published;
+                const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
+                const diffDays = Math.floor(diffHours / 24);
+
+                if (diffHours < 1) return 'Just now';
+                if (diffHours < 24) return `${diffHours}h ago`;
+                if (diffDays < 7) return `${diffDays}d ago`;
+                return published.toLocaleDateString();
+            }
+
+            showLoading(show) {
+                const loadingDiv = document.getElementById('loadingDiv');
+                const fetchBtn = document.getElementById('fetchNewsBtn');
+                
+                if (loadingDiv) {
+                    loadingDiv.style.display = show ? 'block' : 'none';
+                }
+                
+                if (fetchBtn) {
+                    fetchBtn.disabled = show;
+                    
+                    if (show) {
+                        fetchBtn.textContent = '⏳ Loading...';
+                    } else {
+                        this.updateFetchButtonState();
+                    }
+                }
+            }
+
+            showNoNews(show) {
+                const noNewsDiv = document.getElementById('noNewsMessage');
+                if (noNewsDiv) {
+                    noNewsDiv.style.display = show ? 'block' : 'none';
+                }
+            }
+
+            showAnalytics(show) {
+                const analyticsPanel = document.getElementById('analyticsPanel');
+                if (analyticsPanel) {
+                    analyticsPanel.style.display = show ? 'block' : 'none';
+                }
+            }
+
+            clearNews() {
+                const container = document.getElementById('newsContainer');
+                if (!container) return;
+                
+                const cards = container.querySelectorAll('.news-card');
+                
+                // Animate out
+                cards.forEach((card, index) => {
+                    setTimeout(() => {
+                        card.style.transition = 'all 0.3s ease';
+                        card.style.opacity = '0';
+                        card.style.transform = 'translateY(-20px)';
+                    }, index * 50);
+                });
+                
+                // Clear after animation
+                setTimeout(() => {
+                    container.innerHTML = '';
+                    this.newsData = [];
+                    this.showAnalytics(false);
+                    this.showNoNews(false);
+                }, cards.length * 50 + 300);
+                
+                this.showNotification('News articles cleared', 'info');
+            }
+
+            showNotification(message, type = 'info') {
+                // Remove existing notifications
+                const existing = document.querySelector('.notification');
+                if (existing) {
+                    existing.remove();
+                }
+
+                const notification = document.createElement('div');
+                notification.className = `notification notification-${type}`;
+                notification.textContent = message;
+
+                document.body.appendChild(notification);
+
+                // Auto remove after 3 seconds
+                setTimeout(() => {
+                    notification.style.animation = 'slideOut 0.3s ease';
+                    setTimeout(() => {
+                        if (notification.parentNode) {
+                            notification.parentNode.removeChild(notification);
+                        }
+                    }, 300);
+                }, 3000);
+            }
+
+            saveUserPreferences() {
+                // In a real app, this would save to localStorage or a backend
+                // For demo purposes, we'll just log it
+                console.log('Saving preferences:', {
+                    selectedInterests: Array.from(this.selectedInterests),
+                    bookmarkedArticles: Array.from(this.bookmarkedArticles)
+                });
+            }
+
+            loadUserPreferences() {
+                // In a real app, this would load from localStorage or a backend
+                // For demo purposes, we'll start with empty preferences
+                this.updateFetchButtonState();
+            }
+        }
+
+        // Initialize the application when DOM is loaded
+        document.addEventListener('DOMContentLoaded', () => {
+            window.newsReader = new PersonalizedNewsReader();
+            
+            console.log('🔥 Personalized News Reader Loaded Successfully!');
+            console.log('Try clicking on some interest tags and then fetch news!');
+        });
+    </script>
+</body>
+</html>
